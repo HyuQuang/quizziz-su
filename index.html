@@ -1067,6 +1067,11 @@
     let roundCount = 1;
     let activeQuizData = [];
 
+    let autoShuffleTF = true;
+    let tfRoundCount = 1;
+    let activeTFData = [];
+    let tfAnswers = {};
+
     let toastTimeout = null;
     function showToast(msg) {
       const toast = document.getElementById('toast');
@@ -1154,17 +1159,22 @@
     }
 
     function manualShuffle() {
-      roundCount++;
-      generateExamSession(true, false);
-      if (currentTab === 'quiz') {
-        renderQuizQuestion();
+      if (currentTab === 'tf') {
+        shuffleTF();
       } else {
-        switchTab('quiz');
+        roundCount++;
+        generateExamSession(true, false);
+        if (currentTab === 'quiz') {
+          renderQuizQuestion();
+        } else {
+          switchTab('quiz');
+        }
       }
     }
 
     document.addEventListener('DOMContentLoaded', () => {
       generateExamSession(autoShuffle, true);
+      generateTFSession(autoShuffleTF, true);
       renderQuizQuestion();
     });
 
@@ -1183,8 +1193,8 @@
         statusEl.style.display = 'flex';
         renderQuizQuestion();
       } else if (tab === 'tf') {
-        progressEl.style.display = 'none';
-        statusEl.style.display = 'none';
+        progressEl.style.display = 'block';
+        statusEl.style.display = 'flex';
         renderTrueFalse();
       } else if (tab === 'flash') {
         progressEl.style.display = 'none';
@@ -1344,17 +1354,116 @@
       }
     }
 
-    let tfAnswers = {};
+    function generateTFSession(isShuffle = true, silent = false) {
+      const labels = ['a', 'b', 'c', 'd'];
+      let cloned = TF_DATA.map(p => {
+        let clonedItems = p.items.map(item => ({
+          ...item,
+          uid: `${p.id}_${item.label}`,
+          originalLabel: item.label
+        }));
+
+        if (isShuffle) {
+          shuffleArray(clonedItems);
+        }
+
+        clonedItems.forEach((it, idx) => {
+          it.displayLabel = labels[idx];
+        });
+
+        return {
+          ...p,
+          items: clonedItems
+        };
+      });
+
+      if (isShuffle) {
+        shuffleArray(cloned);
+      }
+
+      activeTFData = cloned;
+      tfAnswers = {};
+
+      if (!silent) {
+        showToast(`🎲 Đã xáo ngẫu nhiên 4 bài tư liệu & 16 ý Đúng/Sai (Lượt #${tfRoundCount})!`);
+      }
+    }
+
+    function toggleShuffleTF() {
+      autoShuffleTF = !autoShuffleTF;
+      if (autoShuffleTF) {
+        showToast('🔀 Đã BẬT tự xáo đáp án phần Đúng/Sai');
+      } else {
+        showToast('⏸ Đã TẮT tự xáo đáp án phần Đúng/Sai');
+      }
+      renderTrueFalse();
+    }
+
+    function shuffleTF() {
+      tfRoundCount++;
+      generateTFSession(true, false);
+      renderTrueFalse();
+    }
+
+    function resetTFAnswers() {
+      tfAnswers = {};
+      showToast('🔄 Đã làm mới phần Đúng/Sai (Giữ nguyên thứ tự câu hiện tại)');
+      renderTrueFalse();
+    }
+
+    function handleFinishAndNextRoundTF() {
+      tfRoundCount++;
+      generateTFSession(autoShuffleTF, false);
+      renderTrueFalse();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
 
     function renderTrueFalse() {
+      if (!activeTFData || activeTFData.length === 0) {
+        generateTFSession(autoShuffleTF, true);
+      }
       const quizArea = document.getElementById('quizArea');
-      let html = '';
+      
+      let totalAnswered = 0;
+      let totalCorrect = 0;
+      activeTFData.forEach(p => {
+        p.items.forEach(it => {
+          if (tfAnswers[it.uid] !== undefined) {
+            totalAnswered++;
+            if (tfAnswers[it.uid] === it.correct) {
+              totalCorrect++;
+            }
+          }
+        });
+      });
 
-      TF_DATA.forEach(passage => {
+      const progress = (totalAnswered / 16) * 100;
+      document.getElementById('progressFill').style.width = progress + '%';
+      document.getElementById('qCounter').innerText = `Đã làm: ${totalAnswered} / 16 ý`;
+      document.getElementById('scoreCounter').innerText = `Đúng: ${totalCorrect} / 16`;
+      const tag = document.getElementById('examCodeTag');
+      if (tag) tag.innerText = `Đúng/Sai • Lượt #${tfRoundCount}`;
+
+      let html = `
+        <div style="display:flex; justify-content:space-between; align-items:center; background:var(--card-bg); border:1px solid var(--card-border); padding:12px 18px; border-radius:var(--radius-sm); margin-bottom:18px; flex-wrap:wrap; gap:10px;">
+          <div>
+            <span style="font-size:14px; font-weight:700; color:var(--primary-light);">⚖️ Phần II: Đúng / Sai (16 ý)</span>
+            <span style="font-size:12px; color:var(--text-muted); margin-left:8px;">(Lượt thi #${tfRoundCount})</span>
+          </div>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <button class="control-btn ${autoShuffleTF ? 'active' : ''}" onclick="toggleShuffleTF()">
+              🔀 ${autoShuffleTF ? 'Tự xáo ý: BẬT' : 'Tự xáo ý: TẮT'}
+            </button>
+            <button class="control-btn" onclick="shuffleTF()">🎲 Xáo đề ngay</button>
+            <button class="control-btn" onclick="resetTFAnswers()">🔄 Làm lại</button>
+          </div>
+        </div>
+      `;
+
+      activeTFData.forEach((passage, pIdx) => {
         let itemsHtml = '';
         passage.items.forEach(item => {
-          const key = `${passage.id}_${item.label}`;
-          const userVal = tfAnswers[key];
+          const userVal = tfAnswers[item.uid];
           const answered = userVal !== undefined;
 
           let btnTrueCls = '';
@@ -1372,12 +1481,15 @@
 
           itemsHtml += `
             <div class="tf-item">
-              <div class="tf-text"><b>${item.label})</b> ${item.text}</div>
+              <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
+                <div class="tf-text"><b>${item.displayLabel})</b> ${item.text}</div>
+                <div style="font-size:11px; color:var(--text-muted); font-weight:600; white-space:nowrap; padding-top:2px;">(Gốc: ý ${item.originalLabel})</div>
+              </div>
               <div class="tf-actions">
-                <button class="tf-btn ${btnTrueCls}" onclick="handleTFSelect(${passage.id}, '${item.label}', true)" ${answered ? 'disabled' : ''}>
+                <button class="tf-btn ${btnTrueCls}" onclick="handleTFSelect('${item.uid}', true)" ${answered ? 'disabled' : ''}>
                   ✔ ĐÚNG
                 </button>
-                <button class="tf-btn ${btnFalseCls}" onclick="handleTFSelect(${passage.id}, '${item.label}', false)" ${answered ? 'disabled' : ''}>
+                <button class="tf-btn ${btnFalseCls}" onclick="handleTFSelect('${item.uid}', false)" ${answered ? 'disabled' : ''}>
                   ✖ SAI
                 </button>
               </div>
@@ -1388,7 +1500,7 @@
 
         html += `
           <div class="card">
-            <div class="q-number">${passage.title}</div>
+            <div class="q-number">Bài ${pIdx + 1}: ${passage.title}</div>
             <div class="passage-box">
               ${passage.passage}
               <div class="passage-source">${passage.source}</div>
@@ -1398,20 +1510,52 @@
         `;
       });
 
+      if (totalAnswered === 16) {
+        const percent = Math.round((totalCorrect / 16) * 100);
+        html += `
+          <div class="card result-box" style="margin-top:20px; border: 1.5px solid var(--primary-light); background: linear-gradient(135deg, rgba(30,41,59,0.9), rgba(49,46,129,0.3));">
+            <div style="display:inline-block; font-size:13px; color:var(--primary-light); font-weight:700; margin-bottom:8px; text-transform:uppercase; letter-spacing:0.5px; background:rgba(79,70,229,0.2); padding:4px 14px; border-radius:999px;">
+              🏁 Hoàn thành Phần Đúng / Sai (Lượt #${tfRoundCount})
+            </div>
+            <div class="result-score">${totalCorrect}/16</div>
+            <div class="result-title">${totalCorrect >= 14 ? 'Quá xuất sắc! 🌟' : totalCorrect >= 10 ? 'Kết quả rất tốt! 👏' : 'Cần cố gắng thêm một chút! 💪'}</div>
+            <div class="result-desc">
+              Điểm quy đổi: <b style="color:var(--accent); font-size:17px;">${((totalCorrect / 16) * 4).toFixed(2)} / 4.0 điểm</b> (Chính xác ${percent}%)
+            </div>
+            <div style="background:rgba(255,255,255,0.03); border:1px solid var(--card-border); border-radius:var(--radius-sm); padding:12px; margin-bottom:20px; font-size:13.5px; color:var(--text-muted);">
+              ${autoShuffleTF 
+                ? '✨ <b>Chế độ Tự xáo đáp án Đúng/Sai đang BẬT:</b> Bấm nút dưới để tự động xáo lại toàn bộ 4 bài tư liệu & 16 ý a, b, c, d cho lượt làm mới!' 
+                : '⏸ <b>Chế độ Tự xáo đáp án Đúng/Sai đang TẮT:</b> Giữ nguyên thứ tự hiện tại.'}
+            </div>
+            <div style="display:flex; justify-content:center; gap:12px; flex-wrap:wrap;">
+              <button class="btn btn-primary" onclick="handleFinishAndNextRoundTF()">
+                🎲 ${autoShuffleTF ? 'Xáo đề ngẫu nhiên & Làm lượt mới ➡' : 'Làm lại lượt mới ➡'}
+              </button>
+              <button class="btn btn-outline" onclick="resetTFAnswers()">🔄 Làm lại lượt hiện tại</button>
+              <button class="btn btn-outline" onclick="switchTab('quiz')">Quay lại Trắc nghiệm 24 câu ➡</button>
+            </div>
+          </div>
+        `;
+      }
+
       quizArea.innerHTML = html;
     }
 
-    function handleTFSelect(passageId, label, val) {
-      const key = `${passageId}_${label}`;
-      tfAnswers[key] = val;
+    function handleTFSelect(itemUid, val) {
+      tfAnswers[itemUid] = val;
 
-      const p = TF_DATA.find(x => x.id === passageId);
-      const item = p.items.find(x => x.label === label);
+      let foundItem = null;
+      for (const p of activeTFData) {
+        const it = p.items.find(x => x.uid === itemUid);
+        if (it) { foundItem = it; break; }
+      }
 
-      if (val === item.correct) {
-        playSound('correct');
-      } else {
-        playSound('wrong');
+      if (foundItem) {
+        if (val === foundItem.correct) {
+          playSound('correct');
+        } else {
+          playSound('wrong');
+        }
       }
 
       renderTrueFalse();
