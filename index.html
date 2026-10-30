@@ -1,0 +1,1488 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QUIZZIZ Sử - Hệ Thống Ôn Luyện Trắc Nghiệm & Đúng Sai Lịch Sử 12</title>
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="icon" type="image/png" href="favicon.png">
+  <meta name="description" content="QUIZZIZ Sử - Web app ôn luyện 24 câu trắc nghiệm và 16 câu đúng/sai Lịch sử 12 THPT Cổ Loa. Tự động xáo trộn ngẫu nhiên câu hỏi & đáp án, sinh mã đề mới sau mỗi lượt làm bài.">
+  <meta property="og:title" content="QUIZZIZ Sử - Hệ Thống Ôn Luyện Lịch Sử 12">
+  <meta property="og:description" content="Tự động xáo mã đề, tra cứu mẹo từ khóa điểm 10, luyện thi trắc nghiệm và đúng/sai Lịch sử 12.">
+  <meta property="og:type" content="website">
+  <meta name="theme-color" content="#4f46e5">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #4f46e5;
+      --primary-light: #818cf8;
+      --primary-dark: #3730a3;
+      --accent: #f59e0b;
+      --success: #10b981;
+      --danger: #ef4444;
+      --bg: #0f172a;
+      --card-bg: rgba(30, 41, 59, 0.85);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --radius: 16px;
+      --radius-sm: 10px;
+      --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: linear-gradient(135deg, #0b0f19 0%, #0f172a 50%, #1e1b4b 100%);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px 16px 60px;
+    }
+
+    .app-container {
+      width: 100%;
+      max-width: 820px;
+      margin: 0 auto;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 24px;
+      position: relative;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(79, 70, 229, 0.2);
+      border: 1px solid rgba(129, 140, 248, 0.3);
+      color: var(--primary-light);
+      padding: 6px 14px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
+    h1 {
+      font-family: 'Outfit', sans-serif;
+      font-size: clamp(24px, 5vw, 32px);
+      font-weight: 800;
+      background: linear-gradient(to right, #ffffff, #c7d2fe, #f59e0b);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 8px;
+    }
+
+    .sub-title {
+      color: var(--text-muted);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+      background: rgba(15, 23, 42, 0.6);
+      backdrop-filter: blur(12px);
+      padding: 6px;
+      border-radius: var(--radius);
+      border: 1px solid var(--card-border);
+      margin-bottom: 20px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .tabs::-webkit-scrollbar { display: none; }
+
+    .tab-btn {
+      flex: 1;
+      min-width: 130px;
+      padding: 10px 14px;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-family: 'Outfit', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      white-space: nowrap;
+    }
+
+    .tab-btn:hover {
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .tab-btn.active {
+      color: #fff;
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      box-shadow: 0 4px 15px rgba(79, 70, 229, 0.4);
+    }
+
+    .status-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      padding: 12px 18px;
+      border-radius: var(--radius-sm);
+      margin-bottom: 16px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .progress-bar-container {
+      width: 100%;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 999px;
+      margin-bottom: 20px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--primary-light), var(--accent));
+      transition: width 0.3s ease;
+    }
+
+    .card {
+      background: var(--card-bg);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius);
+      padding: 24px;
+      margin-bottom: 20px;
+      box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .q-number {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--primary-light);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+      display: inline-block;
+    }
+
+    .q-text {
+      font-size: 16.5px;
+      font-weight: 600;
+      line-height: 1.55;
+      margin-bottom: 18px;
+    }
+
+    .passage-box {
+      background: rgba(15, 23, 42, 0.7);
+      border-left: 4px solid var(--accent);
+      padding: 14px 16px;
+      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+      margin-bottom: 18px;
+      font-style: italic;
+      color: #cbd5e1;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    .passage-source {
+      text-align: right;
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 6px;
+      font-style: normal;
+    }
+
+    .options-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .option-btn {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      width: 100%;
+      text-align: left;
+      padding: 14px 16px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1.5px solid rgba(255, 255, 255, 0.08);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-size: 14.5px;
+      line-height: 1.45;
+      font-family: inherit;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .option-btn:hover:not(:disabled) {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(255, 255, 255, 0.2);
+      transform: translateX(4px);
+    }
+
+    .option-btn .opt-badge {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 700;
+      font-size: 13px;
+      width: 24px;
+      height: 24px;
+      min-width: 24px;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-muted);
+      transition: var(--transition);
+    }
+
+    .option-btn.correct {
+      background: rgba(16, 185, 129, 0.15) !important;
+      border-color: var(--success) !important;
+      color: #a7f3d0;
+    }
+    .option-btn.correct .opt-badge {
+      background: var(--success);
+      color: #064e3b;
+    }
+
+    .option-btn.wrong {
+      background: rgba(239, 68, 68, 0.15) !important;
+      border-color: var(--danger) !important;
+      color: #fca5a5;
+    }
+    .option-btn.wrong .opt-badge {
+      background: var(--danger);
+      color: #fff;
+    }
+
+    .tf-item {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius-sm);
+      padding: 14px 16px;
+      margin-bottom: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .tf-text {
+      font-size: 14.5px;
+      line-height: 1.5;
+    }
+
+    .tf-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .tf-btn {
+      flex: 1;
+      padding: 8px 14px;
+      border: 1.5px solid rgba(255, 255, 255, 0.15);
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text);
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 13.5px;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    .tf-btn:hover:not(:disabled) {
+      background: rgba(255, 255, 255, 0.12);
+    }
+    .tf-btn.selected-correct {
+      background: var(--success) !important;
+      border-color: var(--success) !important;
+      color: #064e3b !important;
+    }
+    .tf-btn.selected-wrong {
+      background: var(--danger) !important;
+      border-color: var(--danger) !important;
+      color: #ffffff !important;
+    }
+
+    .explain-box {
+      margin-top: 16px;
+      padding: 14px 16px;
+      background: rgba(79, 70, 229, 0.12);
+      border-left: 3px solid var(--primary-light);
+      border-radius: 0 8px 8px 0;
+      font-size: 13.5px;
+      line-height: 1.55;
+      color: #e0e7ff;
+      display: none;
+      animation: fadeIn 0.3s ease;
+    }
+    .explain-box b {
+      color: var(--accent);
+    }
+
+    .nav-controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 20px;
+      gap: 10px;
+    }
+
+    .btn {
+      padding: 11px 22px;
+      border-radius: var(--radius-sm);
+      font-family: 'Outfit', sans-serif;
+      font-size: 14.5px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: var(--transition);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: #fff;
+      box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+    }
+    .btn-primary:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(79, 70, 229, 0.45);
+    }
+    .btn-outline {
+      background: transparent;
+      border: 1px solid var(--card-border);
+      color: var(--text-muted);
+    }
+    .btn-outline:hover:not(:disabled) {
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.05);
+    }
+    .btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      transform: none !important;
+    }
+
+    .flashcard-deck {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .keyword-card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius-sm);
+      padding: 16px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      transition: var(--transition);
+      cursor: pointer;
+    }
+    .keyword-card:hover {
+      background: rgba(255, 255, 255, 0.06);
+      border-color: rgba(129, 140, 248, 0.3);
+      transform: translateY(-2px);
+    }
+    .kw-q {
+      font-size: 14px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .kw-a {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .result-box {
+      text-align: center;
+      padding: 30px 20px;
+    }
+    .result-score {
+      font-size: 56px;
+      font-family: 'Outfit', sans-serif;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--success), #6ee7b7);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 8px;
+    }
+    .result-title {
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .result-desc {
+      color: var(--text-muted);
+      font-size: 15px;
+      margin-bottom: 24px;
+    }
+
+    .header-controls {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+
+    .control-btn {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--card-border);
+      color: var(--text-muted);
+      border-radius: 999px;
+      padding: 6px 14px;
+      font-size: 12.5px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: var(--transition);
+      font-family: inherit;
+    }
+
+    .control-btn:hover {
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.12);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .control-btn.active {
+      background: rgba(79, 70, 229, 0.25);
+      border-color: var(--primary-light);
+      color: #c7d2fe;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: rgba(15, 23, 42, 0.95);
+      backdrop-filter: blur(14px);
+      border: 1px solid var(--primary-light);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6), 0 0 25px rgba(99, 102, 241, 0.35);
+      color: #fff;
+      padding: 12px 22px;
+      border-radius: 999px;
+      font-size: 13.5px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      z-index: 1000;
+      pointer-events: none;
+      opacity: 0;
+      transition: all 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      max-width: 90vw;
+      text-align: center;
+    }
+
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+
+    @media (max-width: 600px) {
+      body { padding: 12px 10px 40px; }
+      .card { padding: 18px 14px; }
+      .header-controls { gap: 6px; }
+      .control-btn { font-size: 11.5px; padding: 5px 10px; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-container">
+    <header>
+      <div class="header-controls">
+        <button class="control-btn" id="soundToggle" onclick="toggleSound()">🔊 Âm thanh: Bật</button>
+        <button class="control-btn active" id="shuffleToggle" onclick="toggleShuffle()">🔀 Tự xáo đề: BẬT</button>
+        <button class="control-btn" onclick="manualShuffle()">🎲 Đổi mã đề mới</button>
+        <a href="https://hyuquang.github.io/lich-su-12/" target="_blank" class="control-btn" style="text-decoration:none;">📖 Sổ tay lý thuyết</a>
+        <a href="pdf/De_Kiem_Tra_Lich_Su_12_Kem_Dap_An.pdf" target="_blank" class="control-btn" style="text-decoration:none;">📥 Tải Đề PDF</a>
+      </div>
+      <div class="badge" id="examBadge">QUIZZIZ SỬ • THPT Cổ Loa • Mã đề: 0003</div>
+      <h1>QUIZZIZ Sử</h1>
+      <p class="sub-title">Hệ Thống Luyện Đề Tự Động Xáo Mã Đề • Trắc Nghiệm 24 Câu & Đúng/Sai 16 Ý</p>
+    </header>
+
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('quiz')">📝 Trắc Nghiệm 24 Câu</button>
+      <button class="tab-btn" onclick="switchTab('tf')">⚖️ Đúng / Sai (16 ý)</button>
+      <button class="tab-btn" onclick="switchTab('flash')">⚡ Học Mẹo Từ Khóa</button>
+      <button class="tab-btn" onclick="switchTab('mistakes')" id="mistakeTab">🔄 Câu Làm Sai (0)</button>
+    </div>
+
+    <div class="progress-bar-container" id="progressContainer">
+      <div class="progress-fill" id="progressFill"></div>
+    </div>
+
+    <div class="status-bar" id="statusBar">
+      <span id="qCounter">Câu 1 / 24</span>
+      <span id="examCodeTag" style="color: var(--primary-light); font-weight:700;">Mã đề: 0003</span>
+      <span id="scoreCounter" style="color: var(--accent);">Điểm: 0</span>
+    </div>
+
+    <div id="quizArea"></div>
+  </div>
+
+  <script>
+    let soundEnabled = true;
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    let audioCtx = null;
+
+    function playSound(type) {
+      if (!soundEnabled) return;
+      try {
+        if (!audioCtx) audioCtx = new AudioContext();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        const now = audioCtx.currentTime;
+        if (type === 'correct') {
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(523.25, now);
+          osc.frequency.exponentialRampToValueAtTime(783.99, now + 0.15);
+          gain.gain.setValueAtTime(0.15, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+          osc.start(now);
+          osc.stop(now + 0.3);
+        } else if (type === 'wrong') {
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(220, now);
+          osc.frequency.setValueAtTime(180, now + 0.1);
+          gain.gain.setValueAtTime(0.15, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+          osc.start(now);
+          osc.stop(now + 0.25);
+        }
+      } catch(e) {}
+    }
+
+    function toggleSound() {
+      soundEnabled = !soundEnabled;
+      document.getElementById('soundToggle').innerText = soundEnabled ? '🔊 Âm thanh: Bật' : '🔇 Âm thanh: Tắt';
+    }
+
+    const QUIZ_DATA = [
+      {
+        id: 1,
+        question: "Hội nghị Ianta (tháng 2/1945) không thông qua quyết định nào sau đây?",
+        options: [
+          "Tiêu diệt tận gốc chủ nghĩa phát xít Đức và chủ nghĩa quân phiệt Nhật.",
+          "Thỏa thuận về việc phân chia phạm vi ảnh hưởng ở châu Âu và châu Á.",
+          "Thành lập tổ chức Liên hợp quốc nhằm duy trì hòa bình, an ninh thế giới.",
+          "Giao cho quân Pháp việc giải giáp quân đội Nhật ở Đông Dương."
+        ],
+        answer: 3,
+        explain: "Hội nghị Ianta quy định quân Đồng minh giải giáp quân Nhật ở Đông Dương. Sau đó tại Hội nghị Pốt-xđam mới phân công quân Trung Hoa Dân quốc (từ vĩ tuyến 16 trở ra Bắc) và quân Anh (từ vĩ tuyến 16 trở vào Nam). Tuyệt đối không giao cho quân Pháp!"
+      },
+      {
+        id: 2,
+        question: "Mục tiêu và nguyên tắc hoạt động của tổ chức Liên hợp quốc đều được quy định rõ trong văn kiện nào sau đây?",
+        options: [
+          "Hiến chương Liên hợp quốc.",
+          "Tuyên ngôn về thủ tiêu hoàn toàn chủ nghĩa thực dân.",
+          "Tuyên ngôn Quốc tế về Nhân quyền.",
+          "Công ước Liên hợp quốc về Luật biển."
+        ],
+        answer: 0,
+        explain: "Hiến chương Liên hợp quốc là văn kiện nền tảng pháp lý quốc tế tối cao, quy định đầy đủ các mục tiêu và nguyên tắc hoạt động của Liên hợp quốc."
+      },
+      {
+        id: 3,
+        question: "Nội dung nào sau đây không phản ánh đúng bối cảnh lịch sử hình thành tổ chức Liên hợp quốc?",
+        options: [
+          "Nhu cầu thành lập tổ chức quốc tế mới thay thế tổ chức cũ.",
+          "Ý thức của các nước Đồng minh về việc tổ chức thế giới.",
+          "Chủ nghĩa phát xít xuất hiện và cầm quyền ở nhiều nước.",
+          "Nhân dân thế giới có khát vọng được chung sống hòa bình."
+        ],
+        answer: 2,
+        explain: "Chủ nghĩa phát xít xuất hiện và cầm quyền là vào thập niên 1930 dẫn đến Thế chiến II. Đầu năm 1945 khi chuẩn bị thành lập LHQ, chủ nghĩa phát xít đã bên bờ vực sụp đổ hoàn toàn."
+      },
+      {
+        id: 4,
+        question: "Liên hợp quốc có vai trò thúc đẩy phát triển hợp tác quốc tế về",
+        options: [
+          "liên minh quân sự.",
+          "xây dựng bản sắc văn hoá chung.",
+          "thương mại, dịch vụ, du lịch, tình báo.",
+          "kinh tế, tài chính, thương mại, khoa học, kĩ thuật."
+        ],
+        answer: 3,
+        explain: "Thông qua các tổ chức chuyên môn (UNDP, UNESCO, UNICEF, IMF, WB...), LHQ đóng vai trò trụ cột thúc đẩy hợp tác về kinh tế, tài chính, thương mại, khoa học, kĩ thuật."
+      },
+      {
+        id: 5,
+        question: "Cuộc cách mạng khoa học - công nghệ đóng vai trò nào sau đây đối với xu thế toàn cầu hoá?",
+        options: [
+          "Khẳng định vị thế của quốc gia trên trường quốc tế.",
+          "Nâng cao hiệu quả hoạt động của các tổ chức quốc tế.",
+          "Tạo môi trường ổn định để phát triển kinh tế.",
+          "Mở rộng quan hệ hợp tác trên nhiều lĩnh vực."
+        ],
+        answer: 3,
+        explain: "Cách mạng khoa học - công nghệ là lực lượng sản xuất trực tiếp và động lực cốt lõi thúc đẩy xu thế toàn cầu hóa, mở rộng mạnh mẽ sự hợp tác trên nhiều lĩnh vực."
+      },
+      {
+        id: 6,
+        question: "Sau Chiến tranh thế giới thứ hai, một trật tự thế giới mới được thiết lập, thường được gọi là",
+        options: [
+          "trật tự thế giới đơn cực I-an-ta.",
+          "trật tự thế giới đa cực.",
+          "trật tự thế giới hai cực I-an-ta.",
+          "trật tự thế giới đơn cực."
+        ],
+        answer: 2,
+        explain: "Trật tự thế giới mới sau CTTG II do hai siêu cường Liên Xô và Mỹ đứng đầu mỗi cực được gọi là Trật tự thế giới hai cực I-an-ta."
+      },
+      {
+        id: 7,
+        question: "Sự xuất hiện của xu thế đa cực có tác động như thế nào đối với các quốc gia mới nổi?",
+        options: [
+          "Là cơ hội để các nước xóa bỏ vai trò thống trị thế giới của Mỹ.",
+          "Tạo điều kiện để các nước khẳng định vai trò như nhau trong trật tự.",
+          "Tạo môi trường quốc tế thuận lợi để các nước vươn lên khẳng định vị thế.",
+          "Là yếu tố quyết định vị thế của các nước trong trật tự thế giới mới."
+        ],
+        answer: 2,
+        explain: "Xu thế đa cực đem lại sự phân bổ quyền lực đa dạng, tạo môi trường quốc tế thông thoáng và thuận lợi để các nước mới nổi vươn lên khẳng định vị thế của mình."
+      },
+      {
+        id: 8,
+        question: "Nội dung nào sau đây không phải là vấn đề cấp bách đặt ra đối với các cường quốc Liên Xô, Mĩ, Anh vào đầu năm 1945?",
+        options: [
+          "Tổ chức lại trật tự thế giới sau chiến tranh.",
+          "Nhanh chóng đánh bại phát xít.",
+          "Thành lập khối Đồng minh chống phát xít.",
+          "Phân chia thành quả chiến thắng."
+        ],
+        answer: 2,
+        explain: "Khối Đồng minh chống phát xít đã được thành lập từ ngày 1/1/1942 tại Washington; đến đầu 1945 vấn đề này không còn là nhiệm vụ cấp bách nữa."
+      },
+      {
+        id: 9,
+        question: "Nội dung nào sau đây là biểu hiện của xu thế đa cực trong quan hệ quốc tế từ đầu thế kỉ XXI đến nay?",
+        options: [
+          "Các liên minh quân sự xuất hiện ngày càng nhiều và ra sức chạy đua vũ trang.",
+          "Mỹ suy giảm sức mạnh tương đối trong tương quan so sánh với các cường quốc khác.",
+          "Liên Xô trở thành cường quốc kinh tế, chính trị, khoa học - kĩ thuật đứng đầu thế giới.",
+          "Mỹ đã thiết lập được trật tự thế giới “đơn cực” và vai trò lãnh đạo thế giới."
+        ],
+        answer: 1,
+        explain: "Trong xu thế đa cực, Mỹ vẫn là siêu cường đứng đầu nhưng sức mạnh tương đối đã suy giảm trước sự vươn lên của Trung Quốc, Nga, EU, Ấn Độ..."
+      },
+      {
+        id: 10,
+        question: "Từ sau Chiến tranh lạnh, hầu hết các quốc gia điều chỉnh chiến lược phát triển lấy kinh tế làm trọng điểm vì",
+        options: [
+          "sức mạnh quốc gia không dựa trên lực lượng quốc phòng.",
+          "giữa các cường quốc đã chấm dứt việc chạy đua vũ trang.",
+          "hòa bình và an ninh thế giới được bảo vệ ở mức cao nhất.",
+          "kinh tế trở thành nội dung căn bản trong quan hệ quốc tế."
+        ],
+        answer: 3,
+        explain: "Sau Chiến tranh lạnh, sức mạnh tổng hợp của quốc gia dựa chủ yếu vào thực lực kinh tế và KH-KT; kinh tế trở thành nội dung cốt lõi của quan hệ quốc tế."
+      },
+      {
+        id: 11,
+        question: "Nhận xét nào sau đây không phản ánh đúng về sự thành lập tổ chức Liên hợp quốc?",
+        options: [
+          "Phù hợp với khát vọng hòa bình chung của nhân dân thế giới.",
+          "Quá trình hình thành trải qua nhiều hội nghị quốc tế khác nhau.",
+          "Quá trình thành lập lâu dài và chịu ảnh hưởng của Chiến tranh lạnh.",
+          "Các cường quốc Đồng minh giữ vai trò chủ đạo trong việc thành lập."
+        ],
+        answer: 2,
+        explain: "LHQ được thành lập năm 1945 dựa trên sự đồng thuận của phe Đồng minh; Chiến tranh lạnh bắt đầu từ năm 1947, do đó việc thành lập LHQ không chịu ảnh hưởng của Chiến tranh lạnh."
+      },
+      {
+        id: 12,
+        question: "Đầu những năm 70 của thế kỉ XX, trật tự thế giới hai cực I-an-ta đã bước đầu suy yếu với biểu hiện nào sau đây?",
+        options: [
+          "Liên Xô và Mỹ tuyên bố chấm dứt Chiến tranh lạnh.",
+          "Liên Xô thành lập tổ chức Hiệp ước Vác-sa-va.",
+          "Liên Xô và Mỹ thỏa thuận hạn chế vũ khí chiến lược.",
+          "Mỹ thành lập tổ chức Hiệp ước Bắc Đại Tây Dương."
+        ],
+        answer: 2,
+        explain: "Năm 1972, Liên Xô và Mỹ ký hiệp ước SALT-1 (Hạn chế vũ khí tiến công chiến lược), mở ra xu thế hòa hoãn Đông - Tây và bước đầu làm suy yếu trật tự hai cực."
+      },
+      {
+        id: 13,
+        question: "Quyết định nào sau đây của hội nghị I-an-ta (2/1945) đã tạo điều kiện cho thực dân Pháp quay trở lại xâm lược Đông Dương?",
+        options: [
+          "Liên Xô sẽ tham chiến chống quân phiệt Nhật Bản ở châu Á.",
+          "Quân Trung Hoa Dân quốc và quân Anh giải giáp quân Nhật ở Đông Dương.",
+          "Bán đảo Triều Tiên bị chia cắt thành hai miền theo vĩ tuyến 38.",
+          "Đông Nam Á vẫn thuộc phạm vi ảnh hưởng của các nước phương Tây."
+        ],
+        answer: 3,
+        explain: "Hội nghị Ianta thỏa thuận khu vực Đông Nam Á vẫn thuộc phạm vi ảnh hưởng của các nước phương Tây, tạo cớ để thực dân Pháp quay trở lại Đông Dương."
+      },
+      {
+        id: 14,
+        question: "Nội dung nào sau đây vừa là nguyên tắc hoạt động của Liên hợp quốc, vừa là nguyên tắc của Việt Nam trong việc giải quyết các vấn đề ở Biển Đông hiện nay?",
+        options: [
+          "Bình đẳng về chủ quyền của tất cả các quốc gia trên thế giới.",
+          "Sử dụng vũ lực là con đường duy nhất để giải quyết xung đột.",
+          "Giải quyết các tranh chấp quốc tế bằng biện pháp hòa bình.",
+          "Không can thiệp vào công việc nội bộ của bất kì nước nào."
+        ],
+        answer: 2,
+        explain: "Việt Nam luôn kiên trì giải quyết tranh chấp Biển Đông bằng biện pháp hòa bình trên cơ sở luật pháp quốc tế (UNCLOS 1982), trùng khớp với nguyên tắc cốt lõi của LHQ."
+      },
+      {
+        id: 15,
+        question: "Những quyết định của hội nghị I-an-ta và những thỏa thuận sau đó của ba cường quốc đã trở thành",
+        options: [
+          "nguyên nhân kết thúc Chiến tranh lạnh.",
+          "khuôn khổ của trật tự thế giới mới.",
+          "nguyên nhân dẫn đến Chiến tranh lạnh.",
+          "tiền đề cho tổ chức Hội quốc liên ra đời."
+        ],
+        answer: 1,
+        explain: "Các quyết định Ianta đã trở thành khuôn khổ định hình Trật tự thế giới hai cực Ianta sau Chiến tranh thế giới thứ hai."
+      },
+      {
+        id: 16,
+        question: "Theo quy định của Hội nghị Ianta, vùng Đông Âu thuộc phạm vi ảnh hưởng của",
+        options: [
+          "Nhật Bản.",
+          "Liên Xô.",
+          "Mĩ.",
+          "Đức."
+        ],
+        answer: 1,
+        explain: "Theo phân chia Ianta: Đông Âu thuộc phạm vi ảnh hưởng của Liên Xô; Tây Âu thuộc phạm vi của Mỹ và Anh."
+      },
+      {
+        id: 17,
+        question: "Một trong những mục tiêu của tổ chức Liên hợp quốc trong việc đảm bảo quyền con người là",
+        options: [
+          "chống biến đổi khí hậu.",
+          "phòng chống các dịch bệnh.",
+          "tăng cường bình đẳng giới.",
+          "cấm vũ khí hạt nhân."
+        ],
+        answer: 2,
+        explain: "Tăng cường bình đẳng giới, xóa bỏ phân biệt đối xử với phụ nữ là một trong những mục tiêu căn bản về quyền con người của Liên hợp quốc."
+      },
+      {
+        id: 18,
+        question: "Một trong những nhân tố quan trọng tác động đến sự hình thành trật tự thế giới mới sau khi Chiến tranh lạnh chấm dứt là",
+        options: [
+          "cuộc đấu tranh giành độc lập của các dân tộc thuộc địa.",
+          "sự trỗi dậy của chủ nghĩa khủng bố trên phạm vi toàn cầu.",
+          "cuộc chạy đua về sức mạnh tổng hợp giữa các cường quốc.",
+          "cuộc đấu tranh chống chế độ phân biệt chủng tộc ở châu Phi."
+        ],
+        answer: 2,
+        explain: "Sau Chiến tranh lạnh, các cường quốc cạnh tranh quyết liệt về sức mạnh tổng hợp (kinh tế, KH-CN, quân sự) để xác lập vị thế trong trật tự mới."
+      },
+      {
+        id: 19,
+        question: "Liên hợp quốc xác định rõ một trong các mục tiêu của tổ chức là thúc đẩy quan hệ hữu nghị giữa các dân tộc trên cơ sở",
+        options: [
+          "các nước phải có cùng thể chế chính trị, kinh tế, xã hội.",
+          "các nước có sự tương đồng về văn hóa, tôn giáo, ngôn ngữ.",
+          "được sự nhất trí của các ủy viên thường trực Hội đồng Bảo an.",
+          "tôn trọng quyền bình đẳng và quyền tự quyết của các dân tộc."
+        ],
+        answer: 3,
+        explain: "Điều 1 Hiến chương LHQ ghi rõ: Phát triển mối quan hệ hữu nghị giữa các dân tộc trên cơ sở tôn trọng quyền bình đẳng và quyền tự quyết của các dân tộc."
+      },
+      {
+        id: 20,
+        question: "Đoạn trích Điều 2 Hiến chương Liên hợp quốc: “Hiến chương này hoàn toàn không cho phép Liên hợp quốc được can thiệp vào những công việc thực chất thuộc thẩm quyền nội bộ của bất cứ quốc gia nào...” phản ánh nguyên tắc nào?",
+        options: [
+          "Không can thiệp vào công việc nội bộ của bất kì nước nào.",
+          "Giải quyết các tranh chấp quốc tế bằng biện pháp hòa bình.",
+          "Từ bỏ đe dọa bằng hoặc sử dụng vũ lực trong quan hệ quốc tế.",
+          "Bình đẳng về chủ quyền của tất cả các quốc gia thành viên."
+        ],
+        answer: 0,
+        explain: "Đoạn trích trực tiếp phản ánh nguyên tắc không can thiệp vào công việc nội bộ của bất kì quốc gia nào."
+      },
+      {
+        id: 21,
+        question: "Một trong những nguyên tắc hoạt động của tổ chức Liên hợp quốc là",
+        options: [
+          "điều hòa hoạt động của các quốc gia vì những mục tiêu chung.",
+          "tôn trọng toàn vẹn lãnh thổ và độc lập chính trị của các quốc gia.",
+          "hợp tác phát triển có hiệu quả về kinh tế, văn hóa và xã hội.",
+          "tiến hành hợp tác quốc tế để đảm bảo các quyền của con người."
+        ],
+        answer: 1,
+        explain: "Tôn trọng toàn vẹn lãnh thổ và độc lập chính trị là NGUYÊN TẮC (Điều 2). Các phương án A, C, D là MỤC TIÊU của Liên hợp quốc."
+      },
+      {
+        id: 22,
+        question: "Tại hội nghị I-an-ta (2-1945), các cường quốc Đồng minh đã ra quyết định về việc thành lập tổ chức Liên hợp quốc nhằm mục đích chủ yếu nào sau đây?",
+        options: [
+          "Nhanh chóng tiêu diệt quân phiệt Nhật Bản.",
+          "Nhanh chóng tiêu diệt phát xít Đức.",
+          "Thúc đẩy đối ngoại trên phạm vi toàn cầu.",
+          "Duy trì hòa bình và an ninh quốc tế."
+        ],
+        answer: 3,
+        explain: "Mục đích tối cao và trước hết của việc thành lập Liên hợp quốc là duy trì nền hòa bình và an ninh quốc tế, ngăn ngừa thảm họa chiến tranh thế giới mới."
+      },
+      {
+        id: 23,
+        question: "Quyết định nào dưới đây của Hội nghị I-an-ta (2/1945) có tác động tích cực đối với phong trào giải phóng dân tộc ở Đông Nam Á trong năm 1945?",
+        options: [
+          "Đông Nam Á thuộc phạm vi ảnh hưởng của phương Tây.",
+          "Thành lập tổ chức Liên hợp quốc để duy trì hòa bình thế giới.",
+          "Phân chia phạm vi chiếm đóng và ảnh hưởng ở châu Âu, châu Á.",
+          "Tiêu diệt tận gốc chủ nghĩa phát xít Đức và quân phiệt Nhật."
+        ],
+        answer: 3,
+        explain: "Tiêu diệt quân phiệt Nhật buộc Nhật đầu hàng không điều kiện (8/1945), tạo điều kiện thời cơ 'ngàn năm có một' cho Việt Nam, Lào, Indonesia giành độc lập."
+      },
+      {
+        id: 24,
+        question: "Từ năm 1945 đến đầu những năm 70 của thế kỉ XX là giai đoạn trật tự thế giới hai cực I-an-ta",
+        options: [
+          "xác lập và phát triển.",
+          "bước đầu xác lập.",
+          "xói mòn và tan rã.",
+          "suy yếu và sụp đổ."
+        ],
+        answer: 0,
+        explain: "Từ 1945 đến đầu những năm 70 là giai đoạn trật tự hai cực Ianta xác lập và phát triển với sự đối đầu căng thẳng Mỹ - Xô."
+      }
+    ];
+
+    const TF_DATA = [
+      {
+        id: 1,
+        title: "Tư liệu 1: Quan hệ hữu nghị & Quyền tự quyết (Giáo trình Lịch sử QHQT, NXB Chính trị Quốc gia)",
+        passage: "“Bên cạnh sứ mệnh an ninh, Hiến chương Liên hợp quốc cũng quy định rõ mục tiêu thúc đẩy và mở rộng mối quan hệ hữu nghị giữa các dân tộc trên thế giới. Mối quan hệ này phải được xây dựng một cách thực chất trên cơ sở tôn trọng tuyệt đối quyền bình đẳng giữa các quốc gia và quyền tự quyết thiêng liêng của mỗi dân tộc. Việc hiện thực hóa nguyên lý này chính là nhân tố quyết định nhằm củng cố và thắt chặt nền hòa bình lâu dài, ngăn chặn các xu hướng áp đặt đơn phương hay can thiệp vũ trang từ bên ngoài.”",
+        source: "(Theo Giáo trình Lịch sử quan hệ quốc tế, NXB Chính trị Quốc gia, 2008)",
+        items: [
+          {
+            label: "a",
+            text: "Quan hệ hữu nghị giữa các dân tộc cần được xây dựng trên cơ sở tôn trọng quyền bình đẳng giữa các quốc gia và quyền tự quyết của các dân tộc.",
+            correct: true,
+            explain: "Đúng theo câu văn trực tiếp trong đoạn tư liệu."
+          },
+          {
+            label: "b",
+            text: "Từ mục tiêu hoạt động của Liên hợp quốc, bài học rút ra là việc tôn trọng độc lập, chủ quyền và quyền tự quyết của các dân tộc trong quan hệ quốc tế.",
+            correct: true,
+            explain: "Đúng. Đây là bài học lịch sử lớn nhất về quan hệ quốc tế được rút ra từ Hiến chương LHQ."
+          },
+          {
+            label: "c",
+            text: "Việc thúc đẩy quan hệ hữu nghị giữa các dân tộc là cơ sở để xác lập quyền bình đẳng giữa các quốc gia.",
+            correct: false,
+            explain: "Sai. Quyền bình đẳng là nền tảng ĐỂ xây dựng hữu nghị, chứ không phải hữu nghị là cơ sở xác lập bình đẳng."
+          },
+          {
+            label: "d",
+            text: "Theo Hiến chương Liên hợp quốc, việc duy trì hòa bình và an ninh quốc tế là mục tiêu duy nhất của tổ chức này.",
+            correct: false,
+            explain: "Sai vì từ 'duy nhất'. LHQ còn có các mục tiêu lớn khác như phát triển kinh tế, thúc đẩy văn hóa, bảo vệ nhân quyền..."
+          }
+        ]
+      },
+      {
+        id: 2,
+        title: "Tư liệu 2: Điều 1 Hiến chương Liên hợp quốc (Ngày 24-10-1945)",
+        passage: "“Duy trì hoà bình và an ninh quốc tế, và để đạt được mục đích đó, thi hành những biện pháp tập thể có hiệu quả để phòng ngừa và loại trừ các mối đe doạ hoà bình, cấm mọi hành vi xâm lược và phá hoại hoà bình khác, điều chỉnh hoặc giải quyết các vụ tranh chấp hoặc những tình thế có tính chất quốc tế có thể đưa đến sự phá hoại hoà bình, bằng biện pháp hoà bình theo đúng nguyên tắc của công lí và pháp luật quốc tế”.",
+        source: "(Trích: Điều 1, Hiến chương Liên hợp quốc, ngày 24-10-1945)",
+        items: [
+          {
+            label: "a",
+            text: "Ngày nay, Liên hợp quốc vẫn tiếp tục thực hiện mục tiêu giải quyết các vụ tranh chấp, xung đột quốc tế bằng biện pháp hoà bình.",
+            correct: true,
+            explain: "Đúng. Giải quyết tranh chấp hòa bình vẫn là nguyên tắc sống còn và mục tiêu cao nhất của LHQ ngày nay."
+          },
+          {
+            label: "b",
+            text: "Trong số các mục tiêu của Liên hợp quốc, duy trì hoà bình và an ninh quốc tế là mục tiêu được đặt lên hàng đầu.",
+            correct: true,
+            explain: "Đúng. Điều 1 khoản 1 đã đặt duy trì hòa bình và an ninh quốc tế lên vị trí số một."
+          },
+          {
+            label: "c",
+            text: "Một trong những mục tiêu của Liên hợp quốc là giải quyết các vụ tranh chấp quốc tế bằng pháp luật của các quốc gia.",
+            correct: false,
+            explain: "Sai. Đoạn trích nêu rõ giải quyết theo 'công lí và pháp luật quốc tế', không phải pháp luật của từng quốc gia."
+          },
+          {
+            label: "d",
+            text: "Đoạn tư liệu thể hiện mục tiêu của Liên hợp quốc là duy trì hoà bình và an ninh quốc phòng cho tất cả các quốc gia.",
+            correct: false,
+            explain: "Sai. Tư liệu nêu duy trì 'an ninh quốc tế', không đồng nhất với 'an ninh quốc phòng' của từng nước."
+          }
+        ]
+      },
+      {
+        id: 3,
+        title: "Tư liệu 3: Bài học Chiến tranh lạnh & Sức mạnh tổng hợp (Vũ Dương Ninh)",
+        passage: "“Bài học của thời kỳ Chiến tranh lạnh đã chứng tỏ phương thức quan hệ quốc tế lấy đối đầu chính trị - quân sự là chủ yếu không còn phù hợp, phải chịu nhiều tổn thất hoặc thất bại như hai nước Mỹ - Xô và một bị thương một bị mất. Trong khi đó, phương thức lấy hợp tác và cạnh tranh về kinh tế - chính trị là chính lại thu được nhiều tiến bộ kết quả như các nước Đức, Nhật và NICs. Sự hưng thịnh hay suy vong của một quốc gia được quyết định bởi sức mạnh tổng hợp của quốc gia đó, mà chủ yếu là thực lực kinh tế và khoa học - kỹ thuật.”",
+        source: "(Vũ Dương Ninh (Chủ biên), Một số chuyên đề lịch sử thế giới, NXB Đại học Quốc gia Hà Nội, 2001, tr.401)",
+        items: [
+          {
+            label: "a",
+            text: "Thực lực kinh tế và khoa học - kĩ thuật có vai trò quan trọng đối với sự phát triển của một quốc gia.",
+            correct: true,
+            explain: "Đúng. Tư liệu khẳng định kinh tế và KH-KT quyết định sức mạnh tổng hợp của quốc gia."
+          },
+          {
+            label: "b",
+            text: "Tình trạng đối đầu về chính trị - quân sự của Mỹ và Liên Xô trong Chiến tranh lạnh khiến cho hai nước chịu nhiều tổn thất.",
+            correct: true,
+            explain: "Đúng. Tư liệu ghi rõ hai nước 'chịu nhiều tổn thất hoặc thất bại', 'một bị thương một bị mất'."
+          },
+          {
+            label: "c",
+            text: "Đoạn tư liệu thể hiện xu thế phát triển chính của thế giới sau Chiến tranh lạnh.",
+            correct: true,
+            explain: "Đúng. Phản ánh sự chuyển dịch xu thế từ đối đầu quân sự sang hợp tác và cạnh tranh kinh tế - chính trị."
+          },
+          {
+            label: "d",
+            text: "Hợp tác về kinh tế - chính trị làm suy yếu tiềm lực phát triển của từng nước.",
+            correct: false,
+            explain: "Sai. Hợp tác kinh tế giúp các nước phát triển mạnh mẽ (như bài học thành công của Đức, Nhật, NICs)."
+          }
+        ]
+      },
+      {
+        id: 4,
+        title: "Tư liệu 4: Hội nghị Ianta & Trật tự hai cực (Nguyễn Anh Thái)",
+        passage: "“Những quyết định của Hội nghị Ianta tháng 2 - 1945 đã trở thành khuôn khổ của trật tự thế giới mới, từng bước được thiết lập trong những năm 1945 - 1947 sau khi chiến tranh kết thúc, thường được gọi là Trật tự hai cực Ianta (hai cực chỉ Mỹ và Liên Xô phân chia nhau phạm vi thế lực trên cơ sở thỏa thuận của Hội nghị Ianta)”.",
+        source: "(Nguyễn Anh Thái (Chủ biên), Lịch sử thế giới hiện đại, NXB Giáo dục Việt Nam, 2021, tr. 224)",
+        items: [
+          {
+            label: "a",
+            text: "Những quyết định của Hội nghị Ianta đã xác lập xong cục diện hai cực, hai phe – tư bản chủ nghĩa và xã hội chủ nghĩa trong quan hệ quốc tế.",
+            correct: false,
+            explain: "Sai. Hội nghị Ianta mới chỉ tạo ra 'khuôn khổ', cục diện 2 cực 2 phe phải qua các năm 1947 - 1949 mới xác lập xong."
+          },
+          {
+            label: "b",
+            text: "Hội nghị Ianta còn được gọi là “Hội nghị tam cường”, diễn ra căng thẳng và kéo dài khi lực lượng Đồng minh chống phát xít thành lập đến đầu năm 1945 mới kết thúc.",
+            correct: false,
+            explain: "Sai. Hội nghị Ianta chỉ họp bảo mật trong 8 ngày (từ 4 đến 11/2/1945), không diễn ra kéo dài từ khi lập Đồng minh."
+          },
+          {
+            label: "c",
+            text: "Các quyết định của Hội nghị Ianta và Hội nghị Pốt-xđam (7/1945) đã đưa tới yếu tố thuận lợi và khó khăn cho cách mạng Việt Nam (1945-1946).",
+            correct: true,
+            explain: "Đúng. Thuận lợi: Nhật đầu hàng giúp ta cướp chính quyền; Khó khăn: Đồng minh Anh và Trung Hoa Dân quốc vào giải giáp, tạo cớ cho Pháp tái chiếm."
+          },
+          {
+            label: "d",
+            text: "Quyết định trực tiếp đưa tới sự xác lập Trật tự thế giới hai cực chính là sự thỏa thuận giữa các cường quốc trong việc xác lập vùng ảnh hưởng.",
+            correct: true,
+            explain: "Đúng. Việc Mỹ và Xô phân chia vùng chiếm đóng và ảnh hưởng tại Ianta là nhân tố cốt lõi trực tiếp tạo nên trật tự hai cực."
+          }
+        ]
+      }
+    ];
+
+    const FLASHCARD_DATA = [
+      { q: "Hội nghị Ianta KHÔNG thông qua quyết định nào?", a: "Giao cho quân Pháp việc giải giáp quân Nhật ở Đông Dương" },
+      { q: "Mục tiêu và nguyên tắc hoạt động LHQ ghi trong văn kiện nào?", a: "Hiến chương Liên hợp quốc" },
+      { q: "Nội dung KHÔNG phản ánh đúng bối cảnh lập LHQ?", a: "Chủ nghĩa phát xít xuất hiện và cầm quyền ở nhiều nước" },
+      { q: "Liên hợp quốc thúc đẩy hợp tác quốc tế về lĩnh vực nào?", a: "Kinh tế, tài chính, thương mại, khoa học, kĩ thuật" },
+      { q: "Cách mạng KH-CN đóng vai trò gì đối với toàn cầu hoá?", a: "Mở rộng quan hệ hợp tác trên nhiều lĩnh vực" },
+      { q: "Trật tự thế giới mới sau Chiến tranh thế giới thứ hai gọi là gì?", a: "Trật tự thế giới hai cực I-an-ta" },
+      { q: "Tác động của xu thế đa cực đối với các quốc gia mới nổi?", a: "Tạo môi trường quốc tế thuận lợi vươn lên khẳng định vị thế" },
+      { q: "Đầu năm 1945, vấn đề nào KHÔNG phải cấp bách?", a: "Thành lập khối Đồng minh chống phát xít (đã lập từ 1942)" },
+      { q: "Biểu hiện xu thế đa cực từ đầu thế kỉ XXI đến nay?", a: "Mỹ suy giảm sức mạnh tương đối so với các cường quốc" },
+      { q: "Sau Chiến tranh lạnh lấy kinh tế làm trọng điểm vì sao?", a: "Kinh tế trở thành nội dung căn bản trong quan hệ quốc tế" },
+      { q: "Nhận xét KHÔNG đúng về sự thành lập Liên hợp quốc?", a: "Quá trình thành lập lâu dài và chịu ảnh hưởng của Chiến tranh lạnh" },
+      { q: "Đầu những năm 70, trật tự 2 cực suy yếu với biểu hiện nào?", a: "Liên Xô và Mỹ thỏa thuận hạn chế vũ khí chiến lược (SALT-1)" },
+      { q: "Quyết định Ianta tạo điều kiện cho Pháp tái chiếm Đông Dương?", a: "Đông Nam Á vẫn thuộc phạm vi ảnh hưởng của phương Tây" },
+      { q: "Nguyên tắc LHQ giống nguyên tắc của VN giải quyết Biển Đông?", a: "Giải quyết các tranh chấp quốc tế bằng biện pháp hòa bình" },
+      { q: "Quyết định của Ianta và thỏa thuận 3 cường quốc trở thành gì?", a: "Khuôn khổ của trật tự thế giới mới" },
+      { q: "Theo Hội nghị Ianta, vùng Đông Âu thuộc phạm vi ảnh hưởng của ai?", a: "Liên Xô" },
+      { q: "Mục tiêu của LHQ trong việc đảm bảo quyền con người?", a: "Tăng cường bình đẳng giới" },
+      { q: "Nhân tố tác động hình thành trật tự sau Chiến tranh lạnh?", a: "Cuộc chạy đua về sức mạnh tổng hợp giữa các cường quốc" },
+      { q: "Thúc đẩy quan hệ hữu nghị giữa các dân tộc trên cơ sở nào?", a: "Tôn trọng quyền bình đẳng và quyền tự quyết của các dân tộc" },
+      { q: "Điều 2 Hiến chương (thẩm quyền nội bộ) phản ánh nguyên tắc nào?", a: "Không can thiệp vào công việc nội bộ của bất kì nước nào" },
+      { q: "Một trong những NGUYÊN TẮC hoạt động của LHQ là gì?", a: "Tôn trọng toàn vẹn lãnh thổ và độc lập chính trị của các quốc gia" },
+      { q: "Mục đích chủ yếu khi thành lập Liên hợp quốc tại Ianta?", a: "Duy trì hòa bình và an ninh quốc tế" },
+      { q: "Quyết định Ianta có tác động tích cực tới ĐNA năm 1945?", a: "Tiêu diệt tận gốc chủ nghĩa phát xít Đức và quân phiệt Nhật" },
+      { q: "Giai đoạn 1945 đến đầu những năm 70 là giai đoạn trật tự Ianta như thế nào?", a: "Xác lập và phát triển" }
+    ];
+
+    let currentTab = 'quiz';
+    let currentQIndex = 0;
+    let score = 0;
+    let userAnswers = {};
+    let mistakeList = [];
+
+    let autoShuffle = true;
+    let currentExamCode = '0003';
+    let roundCount = 1;
+    let activeQuizData = [];
+
+    let toastTimeout = null;
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      if (!toast) return;
+      toast.innerHTML = msg;
+      toast.classList.add('show');
+      if (toastTimeout) clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(() => {
+        toast.classList.remove('show');
+      }, 3200);
+    }
+
+    function shuffleArray(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+      return array;
+    }
+
+    function toggleShuffle() {
+      autoShuffle = !autoShuffle;
+      const btn = document.getElementById('shuffleToggle');
+      if (autoShuffle) {
+        btn.classList.add('active');
+        btn.innerText = '🔀 Tự xáo đề: BẬT';
+        showToast('🔀 Đã BẬT tự xáo đề (Tự động xáo ngẫu nhiên sau mỗi lượt hoàn thành)');
+      } else {
+        btn.classList.remove('active');
+        btn.innerText = '⏸ Tự xáo đề: TẮT';
+        showToast('⏸ Đã TẮT tự xáo đề (Giữ nguyên thứ tự câu hỏi & đáp án)');
+      }
+    }
+
+    function updateExamBadge() {
+      const badge = document.getElementById('examBadge');
+      if (badge) badge.innerText = `QUIZZIZ SỬ • Mã đề: ${currentExamCode}`;
+      const tag = document.getElementById('examCodeTag');
+      if (tag) tag.innerText = `Mã đề: ${currentExamCode}`;
+    }
+
+    function generateExamSession(isShuffle = true, silent = false) {
+      if (isShuffle) {
+        // Sinh ngẫu nhiên mã đề 4 chữ số (ví dụ 0145, 0628, 0931...)
+        const randCode = Math.floor(100 + Math.random() * 900);
+        currentExamCode = '0' + randCode;
+
+        // Nhân bản sâu danh sách câu hỏi và xáo trộn các đáp án A, B, C, D
+        let cloned = QUIZ_DATA.map(q => {
+          const correctText = q.options[q.answer];
+          let shuffledOptions = [...q.options];
+          shuffleArray(shuffledOptions);
+          const newAnswerIdx = shuffledOptions.indexOf(correctText);
+
+          return {
+            ...q,
+            originalId: q.id,
+            options: shuffledOptions,
+            answer: newAnswerIdx
+          };
+        });
+
+        // Xáo trộn thứ tự các câu hỏi
+        shuffleArray(cloned);
+        activeQuizData = cloned;
+
+        if (!silent) {
+          showToast(`🎲 Đã tạo <b>Mã đề ${currentExamCode}</b>! Đã xáo ngẫu nhiên 24 câu hỏi & các đáp án A, B, C, D.`);
+        }
+      } else {
+        // Giữ nguyên thứ tự gốc
+        currentExamCode = '0003';
+        activeQuizData = QUIZ_DATA.map(q => ({
+          ...q,
+          originalId: q.id,
+          options: [...q.options],
+          answer: q.answer
+        }));
+      }
+
+      currentQIndex = 0;
+      score = 0;
+      userAnswers = {};
+      updateExamBadge();
+    }
+
+    function manualShuffle() {
+      roundCount++;
+      generateExamSession(true, false);
+      if (currentTab === 'quiz') {
+        renderQuizQuestion();
+      } else {
+        switchTab('quiz');
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      generateExamSession(autoShuffle, true);
+      renderQuizQuestion();
+    });
+
+    function switchTab(tab) {
+      currentTab = tab;
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      if (window.event && window.event.target && window.event.target.classList) {
+        window.event.target.classList.add('active');
+      }
+
+      const progressEl = document.getElementById('progressContainer');
+      const statusEl = document.getElementById('statusBar');
+
+      if (tab === 'quiz') {
+        progressEl.style.display = 'block';
+        statusEl.style.display = 'flex';
+        renderQuizQuestion();
+      } else if (tab === 'tf') {
+        progressEl.style.display = 'none';
+        statusEl.style.display = 'none';
+        renderTrueFalse();
+      } else if (tab === 'flash') {
+        progressEl.style.display = 'none';
+        statusEl.style.display = 'none';
+        renderFlashcards();
+      } else if (tab === 'mistakes') {
+        progressEl.style.display = 'none';
+        statusEl.style.display = 'none';
+        renderMistakes();
+      }
+    }
+
+    function renderQuizQuestion() {
+      if (!activeQuizData || activeQuizData.length === 0) {
+        generateExamSession(autoShuffle, true);
+      }
+      const q = activeQuizData[currentQIndex];
+      const quizArea = document.getElementById('quizArea');
+      
+      const progress = ((currentQIndex + 1) / activeQuizData.length) * 100;
+      document.getElementById('progressFill').style.width = progress + '%';
+      document.getElementById('qCounter').innerText = `Câu ${currentQIndex + 1} / ${activeQuizData.length}`;
+      document.getElementById('scoreCounter').innerText = `Điểm: ${score} / ${activeQuizData.length}`;
+      updateExamBadge();
+
+      const alphabet = ['A', 'B', 'C', 'D'];
+      let optionsHtml = '';
+      const answered = userAnswers[currentQIndex] !== undefined;
+
+      q.options.forEach((opt, idx) => {
+        let cls = '';
+        if (answered) {
+          if (idx === q.answer) cls = 'correct';
+          else if (idx === userAnswers[currentQIndex]) cls = 'wrong';
+        }
+        optionsHtml += `
+          <button class="option-btn ${cls}" onclick="handleOptionSelect(${idx})" ${answered ? 'disabled' : ''}>
+            <span class="opt-badge">${alphabet[idx]}</span>
+            <span>${opt}</span>
+          </button>
+        `;
+      });
+
+      quizArea.innerHTML = `
+        <div class="card">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <div class="q-number">Câu hỏi #${currentQIndex + 1} &bull; Mã đề ${currentExamCode}</div>
+            <div style="font-size:12px; color:var(--text-muted); font-weight:600;">(Gốc: Câu #${q.originalId})</div>
+          </div>
+          <div class="q-text">${q.question}</div>
+          <div class="options-grid">${optionsHtml}</div>
+          <div class="explain-box" id="explainBox" style="${answered ? 'display:block;' : ''}">
+            <b>💡 Giải thích chi tiết:</b> ${q.explain}
+          </div>
+          <div class="nav-controls">
+            <button class="btn btn-outline" onclick="prevQuestion()" ${currentQIndex === 0 ? 'disabled' : ''}>⬅ Câu trước</button>
+            <button class="btn btn-primary" onclick="nextQuestion()">
+              ${currentQIndex === activeQuizData.length - 1 ? 'Xem kết quả 🏁' : 'Câu tiếp theo ➡'}
+            </button>
+          </div>
+        </div>
+      `;
+    }
+
+    function handleOptionSelect(selectedIdx) {
+      const q = activeQuizData[currentQIndex];
+      userAnswers[currentQIndex] = selectedIdx;
+
+      if (selectedIdx === q.answer) {
+        score++;
+        playSound('correct');
+      } else {
+        playSound('wrong');
+        if (!mistakeList.includes(q.originalId)) {
+          mistakeList.push(q.originalId);
+          document.getElementById('mistakeTab').innerText = `🔄 Câu Làm Sai (${mistakeList.length})`;
+        }
+      }
+
+      renderQuizQuestion();
+    }
+
+    function prevQuestion() {
+      if (currentQIndex > 0) {
+        currentQIndex--;
+        renderQuizQuestion();
+      }
+    }
+
+    function nextQuestion() {
+      if (currentQIndex < activeQuizData.length - 1) {
+        currentQIndex++;
+        renderQuizQuestion();
+      } else {
+        renderQuizResult();
+      }
+    }
+
+    function renderQuizResult() {
+      const percent = Math.round((score / activeQuizData.length) * 100);
+      let title = "Rất xuất sắc! 🎉";
+      let desc = "Bạn đã nắm cực chắc 100% nội dung ôn tập Lịch sử!";
+      if (percent < 50) {
+        title = "Cần cố gắng thêm một chút! 💪";
+        desc = "Hãy đọc phần 'Học Mẹo Từ Khóa' và thử luyện lại những câu sai nhé.";
+      } else if (percent < 85) {
+        title = "Kết quả rất tốt! 👏";
+        desc = "Bạn đã nắm khá vững, luyện thêm 1 lần nữa là đạt điểm 10 trọn vẹn!";
+      }
+
+      document.getElementById('quizArea').innerHTML = `
+        <div class="card result-box">
+          <div style="display:inline-block; font-size:13px; color:var(--primary-light); font-weight:700; margin-bottom:8px; text-transform:uppercase; letter-spacing:0.5px; background:rgba(79,70,229,0.15); padding:4px 12px; border-radius:999px;">
+            🏁 Hoàn thành Lượt thi #${roundCount} &bull; Mã đề ${currentExamCode}
+          </div>
+          <div class="result-score">${score}/${activeQuizData.length}</div>
+          <div class="result-title">${title}</div>
+          <div class="result-desc">${desc} (Tỉ lệ chính xác: ${percent}%)</div>
+
+          <div style="background:rgba(255,255,255,0.03); border:1px solid var(--card-border); border-radius:var(--radius-sm); padding:14px; margin-bottom:20px; font-size:13.5px; color:var(--text-muted);">
+            ${autoShuffle 
+              ? '✨ <b>Chế độ Tự xáo đề đang BẬT:</b> Bấm nút dưới để tạo ngay một mã đề mới hoàn toàn ngẫu nhiên và bắt đầu lượt làm tiếp theo!' 
+              : '⏸ <b>Chế độ Tự xáo đề đang TẮT:</b> Giữ nguyên thứ tự câu hỏi và đáp án cho lượt sau.'}
+          </div>
+
+          <div style="display:flex; justify-content:center; gap:12px; flex-wrap:wrap;">
+            <button class="btn btn-primary" onclick="handleFinishAndNextRound()">
+              🎲 ${autoShuffle ? 'Xáo đề ngẫu nhiên & Làm lượt mới ➡' : 'Làm lại lượt mới ➡'}
+            </button>
+            <button class="btn btn-outline" onclick="restartSameExam()">🔄 Làm lại mã đề này (${currentExamCode})</button>
+            ${mistakeList.length > 0 ? `<button class="btn btn-outline" onclick="switchTab('mistakes')">Xem ${mistakeList.length} câu làm sai</button>` : ''}
+            <button class="btn btn-outline" onclick="switchTab('tf')">Chuyển sang phần Đúng/Sai ➡</button>
+          </div>
+        </div>
+      `;
+    }
+
+    function handleFinishAndNextRound() {
+      roundCount++;
+      generateExamSession(autoShuffle, false);
+      renderQuizQuestion();
+    }
+
+    function restartSameExam() {
+      currentQIndex = 0;
+      score = 0;
+      userAnswers = {};
+      showToast(`🔄 Làm lại <b>Mã đề ${currentExamCode}</b> (Giữ nguyên cấu trúc đề hiện tại)`);
+      renderQuizQuestion();
+    }
+
+    function restartQuiz() {
+      if (autoShuffle) {
+        handleFinishAndNextRound();
+      } else {
+        restartSameExam();
+      }
+    }
+
+    let tfAnswers = {};
+
+    function renderTrueFalse() {
+      const quizArea = document.getElementById('quizArea');
+      let html = '';
+
+      TF_DATA.forEach(passage => {
+        let itemsHtml = '';
+        passage.items.forEach(item => {
+          const key = `${passage.id}_${item.label}`;
+          const userVal = tfAnswers[key];
+          const answered = userVal !== undefined;
+
+          let btnTrueCls = '';
+          let btnFalseCls = '';
+
+          if (answered) {
+            if (item.correct === true) {
+              btnTrueCls = 'selected-correct';
+              if (userVal === false) btnFalseCls = 'selected-wrong';
+            } else {
+              btnFalseCls = 'selected-correct';
+              if (userVal === true) btnTrueCls = 'selected-wrong';
+            }
+          }
+
+          itemsHtml += `
+            <div class="tf-item">
+              <div class="tf-text"><b>${item.label})</b> ${item.text}</div>
+              <div class="tf-actions">
+                <button class="tf-btn ${btnTrueCls}" onclick="handleTFSelect(${passage.id}, '${item.label}', true)" ${answered ? 'disabled' : ''}>
+                  ✔ ĐÚNG
+                </button>
+                <button class="tf-btn ${btnFalseCls}" onclick="handleTFSelect(${passage.id}, '${item.label}', false)" ${answered ? 'disabled' : ''}>
+                  ✖ SAI
+                </button>
+              </div>
+              ${answered ? `<div style="font-size:13px; color:#cbd5e1; margin-top:4px; padding-top:6px; border-top:1px dashed rgba(255,255,255,0.1);">💡 <b>Giải thích:</b> ${item.explain}</div>` : ''}
+            </div>
+          `;
+        });
+
+        html += `
+          <div class="card">
+            <div class="q-number">${passage.title}</div>
+            <div class="passage-box">
+              ${passage.passage}
+              <div class="passage-source">${passage.source}</div>
+            </div>
+            ${itemsHtml}
+          </div>
+        `;
+      });
+
+      quizArea.innerHTML = html;
+    }
+
+    function handleTFSelect(passageId, label, val) {
+      const key = `${passageId}_${label}`;
+      tfAnswers[key] = val;
+
+      const p = TF_DATA.find(x => x.id === passageId);
+      const item = p.items.find(x => x.label === label);
+
+      if (val === item.correct) {
+        playSound('correct');
+      } else {
+        playSound('wrong');
+      }
+
+      renderTrueFalse();
+    }
+
+    function renderFlashcards() {
+      const quizArea = document.getElementById('quizArea');
+      let cardsHtml = '';
+
+      FLASHCARD_DATA.forEach((item, index) => {
+        cardsHtml += `
+          <div class="keyword-card" onclick="this.classList.toggle('revealed')">
+            <div class="kw-q">❓ <b>Câu ${index + 1}:</b> ${item.q}</div>
+            <div class="kw-a">👉 <span>${item.a}</span></div>
+          </div>
+        `;
+      });
+
+      quizArea.innerHTML = `
+        <div class="card">
+          <h2 style="font-family:'Outfit'; font-size:18px; margin-bottom:6px; color:var(--accent);">⚡ Bảng Bí Kíp Neo Từ Khóa (Thuộc Lầu 3 Phút)</h2>
+          <p style="color:var(--text-muted); font-size:14px; margin-bottom:16px;">
+            Đọc câu hỏi bên trên và chỉ cần nhớ ngay cụm từ khóa in vàng bên dưới. Dù đề có bị trộn 100 mã thì nhìn thấy từ khóa là khoanh chuẩn 100%!
+          </p>
+          <div class="flashcard-deck">
+            ${cardsHtml}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderMistakes() {
+      const quizArea = document.getElementById('quizArea');
+      if (mistakeList.length === 0) {
+        quizArea.innerHTML = `
+          <div class="card" style="text-align:center; padding:40px 20px;">
+            <div style="font-size:48px; margin-bottom:12px;">🎉</div>
+            <h2 style="font-family:'Outfit'; font-size:20px; margin-bottom:8px;">Tuyệt vời! Bạn chưa làm sai câu nào</h2>
+            <p style="color:var(--text-muted); font-size:14px; margin-bottom:20px;">Hãy tiếp tục thử sức với các phần khác để duy trì phong độ nhé!</p>
+            <button class="btn btn-primary" onclick="switchTab('quiz')">Quay lại làm trắc nghiệm</button>
+          </div>
+        `;
+        return;
+      }
+
+      let itemsHtml = '';
+      mistakeList.forEach(id => {
+        const q = QUIZ_DATA.find(x => x.id === id);
+        itemsHtml += `
+          <div class="keyword-card" style="border-left: 3px solid var(--danger);">
+            <div style="font-size:13px; font-weight:700; color:var(--danger); margin-bottom:4px;">CÂU ${q.id} (ĐÃ CHỌN SAI)</div>
+            <div style="font-size:15px; font-weight:600; margin-bottom:8px;">${q.question}</div>
+            <div style="font-size:14px; color:#a7f3d0; margin-bottom:6px;"><b>✔ Đáp án đúng:</b> ${q.options[q.answer]}</div>
+            <div style="font-size:13px; color:#cbd5e1; background:rgba(0,0,0,0.2); padding:8px 12px; border-radius:6px;"><b>💡 Ghi nhớ:</b> ${q.explain}</div>
+          </div>
+        `;
+      });
+
+      quizArea.innerHTML = `
+        <div class="card">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+            <h2 style="font-family:'Outfit'; font-size:18px; color:var(--danger);">Danh sách ${mistakeList.length} câu bạn vừa làm sai</h2>
+            <button class="btn btn-outline" style="padding:6px 12px; font-size:12px;" onclick="mistakeList=[]; document.getElementById('mistakeTab').innerText='🔄 Câu Làm Sai (0)'; renderMistakes();">Xóa danh sách</button>
+          </div>
+          <div class="flashcard-deck">
+            ${itemsHtml}
+          </div>
+        </div>
+      `;
+    }
+  </script>
+  <div class="toast" id="toast"></div>
+</body>
+</html>
